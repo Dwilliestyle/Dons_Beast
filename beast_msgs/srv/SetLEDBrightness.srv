@@ -1,0 +1,4 @@
+float32 brightness
+---
+bool success
+string message

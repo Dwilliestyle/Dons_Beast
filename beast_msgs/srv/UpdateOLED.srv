@@ -1,0 +1,7 @@
+# Request - data to send to OLED
+uint8 line_num    # Line number (0-3)
+string text       # Text to display (max ~20 chars depending on display)
+---
+# Response - result of the update
+bool success      # Whether the update was successful
+string message    # Optional status/error message

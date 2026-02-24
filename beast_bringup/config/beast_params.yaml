@@ -1,0 +1,60 @@
+/**:
+  ros__parameters:
+    # ESP32 Bridge Communication
+    serial_port: '/dev/ttyAMA0'
+    baud_rate: 115200
+    feedback_rate: 1000.0          # Hz - how fast to read sensor data from ESP32
+    min_angular_threshold: 0.2     # rad/s - minimum angular velocity when stationary
+    low_voltage_threshold: 9.0     # volts - ESP32 low battery warning
+    warning_cooldown: 5.0          # seconds between battery warnings
+    
+    # Serial Communication (legacy - kept for compatibility)
+    timeout: 0.1
+    
+    # Physical Robot Parameters (from URDF)
+    track_radius: 0.02225     # meters (40mm wheels)
+    track_separation: 0.143   # meters (70mm track width)
+    sprocket_diameter: 0.0445
+    wheelbase: 0.100          # meters (distance between front and rear axles)
+    
+    # Speed Limits
+    max_linear_speed: 0.5      # m/s - maximum forward/backward speed
+    max_angular_speed: 2.0     # rad/s - maximum turning speed
+    speed_scale: 1.0           # overall speed multiplier (0.0-1.0)
+    
+    # Joystick Teleop Settings
+    deadzone: 0.2              # joystick deadzone to prevent drift
+    linear_gear_default: 1.0   # starting linear speed gear (1.0 = full speed)
+    angular_gear_default: 1.0  # starting angular speed gear (1.0 = full speed)
+    
+    # Motor Control
+    watchdog_timeout: 0.5      # seconds - stop motors if no cmd_vel received
+    
+    # Battery Monitor (INA219 sensor)
+    i2c_bus: 1                       # I2C bus number
+    ina219_address: 0x42             # INA219 I2C address
+    low_voltage_threshold: 10.0      # volts - show low battery warning
+    critical_voltage_threshold: 9.5  # volts - critical battery level
+    min_voltage: 6.0                 # volts - minimum valid reading
+    max_voltage: 13.0                # volts - maximum valid reading
+    update_rate: 5.0                 # Hz - how often to check battery
+    
+    # OLED Display Settings
+    display_update_rate: 2.0   # Hz - how often to update display
+    display_timeout: 30.0      # seconds - turn off display after inactivity
+    
+    # Odometry Settings
+    publish_rate: 20.0         # Hz - odometry publishing frequency
+    pub_odom_tf: true          # whether to publish odom->base_footprint transform
+    odom_frame: 'odom'         # odometry frame name
+    base_footprint_frame: 'base_footprint'  # robot base footprint frame
+    base_frame: 'base_link'    # robot base frame name
+    use_imu_heading: false     # use IMU for heading instead of wheel odometry
+    
+    # Camera Settings (if using PT camera)
+    camera_enabled: false      # enable/disable camera node
+    camera_frame_rate: 30      # fps
+    
+    # LIDAR Settings (if using D500)
+    lidar_enabled: false       # enable/disable lidar
+    lidar_frame: 'base_lidar_link'

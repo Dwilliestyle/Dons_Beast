@@ -1,0 +1,19 @@
+# Build artifacts
+build/
+install/
+log/
+
+# Python
+*.pyc
+__pycache__/
+*.egg-info/
+
+# IDE
+.vscode/
+
+# ROS bags
+*.bag
+*.db3
+
+# Third-party packages
+ldlidar_stl_ros2/
