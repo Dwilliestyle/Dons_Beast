@@ -91,6 +91,7 @@ class VoiceAssistant(Node):
             if results:
                 answer = results[0].get('body', 'I could not find an answer')
                 answer = re.sub(r'\[\d+\]', '', answer)
+                answer = re.sub(r'\(\/.*?\/.*?\)', '', answer)
                 sentences = answer.split('. ')
                 return '. '.join(sentences[:2]).strip()
             else:
