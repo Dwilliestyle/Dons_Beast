@@ -6,6 +6,7 @@ import subprocess
 import speech_recognition as sr
 from datetime import datetime
 import os
+import threading
 from ddgs import DDGS
 import re
 from beast_msgs.srv import SetLEDBrightness
@@ -34,17 +35,19 @@ class VoiceAssistant(Node):
         self.light_client.call_async(req)
         self.get_logger().info('Headlights ON')
 
+    import threading
+
     def lights_off_delayed(self, delay=3.0):
         if self._lights_timer is not None:
             self._lights_timer.cancel()
-        self._lights_timer = self.create_timer(delay, self._lights_off_callback)
+        self._lights_timer = threading.Timer(delay, self._lights_off_callback)
+        self._lights_timer.start()
 
     def _lights_off_callback(self):
         req = SetLEDBrightness.Request()
         req.brightness = 0.0
         self.light_client.call_async(req)
         self.get_logger().info('Headlights OFF')
-        self._lights_timer.cancel()
         self._lights_timer = None
 
     # ---------- Existing methods (mostly unchanged) ----------
