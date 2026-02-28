@@ -8,7 +8,6 @@ from datetime import datetime
 import os
 from ddgs import DDGS
 import re
-from std_srvs.srv import SetBool  # <-- adjust if your service type differs
 from beast_msgs.srv import SetLEDBrightness
 
 class VoiceAssistant(Node):
@@ -16,7 +15,7 @@ class VoiceAssistant(Node):
         super().__init__('voice_assistant')
 
         # LED service client
-        self.light_client = self.create_client(SetBool, '/set_led_mode')  # <-- your service name here
+        self.light_client = self.create_client(SetLEDBrightness, 'ugv/set_headlights')
         self._lights_timer = None
 
         self.get_logger().info('Voice Assistant ready!')
