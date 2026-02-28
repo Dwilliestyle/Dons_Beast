@@ -2,7 +2,7 @@
 
 My ROS2 Jazzy-based autonomous robot built on the Waveshare UGV Beast platform with custom modular packages.
 
-![UGV Beast](images/Beast.jpg)
+![UGV Beast](images/20260228_172312.jpg)
 
 ## 🤖 Features
 
