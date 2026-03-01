@@ -35,8 +35,6 @@ class VoiceAssistant(Node):
         self.light_client.call_async(req)
         self.get_logger().info('Headlights ON')
 
-    import threading
-
     def lights_off_delayed(self, delay=3.0):
         if self._lights_timer is not None:
             self._lights_timer.cancel()
@@ -55,7 +53,7 @@ class VoiceAssistant(Node):
     def speak(self, text):
         """Use espeak to make the robot speak — blocking so we know when it's done"""
         self.get_logger().info(f'Speaking: {text}')
-        subprocess.run(['espeak', text], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        subprocess.run(['espeak', '-a', '200', '-s', '130', text], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
     def record_audio(self, duration=3):
         filename_48k = f'/tmp/voice_48k_{datetime.now().strftime("%Y%m%d_%H%M%S")}.wav'
