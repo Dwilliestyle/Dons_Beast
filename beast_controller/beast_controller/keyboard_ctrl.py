@@ -128,7 +128,6 @@ def main():
 			twist.angular.z = turn * th
 			if not stop: ugv_keyboard.pub.publish(twist)
 			if stop:ugv_keyboard.pub.publish(Twist())
-			ugv_keyboard.get_logger().info(f"DEBUG: key={repr(key)} x={x} th={th} stop={stop} linear={twist.linear.x}")
 	except Exception as e: print(e)
 	finally: ugv_keyboard.pub.publish(Twist())
 	termios.tcsetattr(sys.stdin, termios.TCSADRAIN, ugv_keyboard.settings)
