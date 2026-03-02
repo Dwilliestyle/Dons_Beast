@@ -119,8 +119,9 @@ def main():
 				status = (status + 1) % 15
 			elif key == ' ': (x, th) = (0, 0)
 			else:
-				count = count + 1
-				if count > 4: (x, th) = (0, 0)
+				if key != '':
+					count = count + 1
+					if count > 4: (x, th) = (0, 0)
 				if (key == '\x03'): break
 			if xspeed_switch: twist.linear.x = speed * x
 			else: twist.linear.y = speed * x
