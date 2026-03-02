@@ -15,4 +15,10 @@ def generate_launch_description():
             name='keyboard_ctrl',
             output='screen'
         ),
+        Node(
+            package='beast_utils',
+            executable='battery_monitor.py',
+            name='battery_monitor',
+            output='screen'
+        ),
     ])
