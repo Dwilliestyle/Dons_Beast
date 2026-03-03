@@ -9,7 +9,12 @@ def generate_launch_description():
             name='esp32_bridge',
             output='screen'
         ),
-      
+        Node(
+            package='beast_motion',
+            executable='odom_publisher',
+            name='odom_publisher',
+            output='screen'
+        ),
         Node(
             package='beast_utils',
             executable='battery_monitor',
