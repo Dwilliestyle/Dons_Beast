@@ -44,6 +44,11 @@ MIN_ANGULAR_SPEED  = 8.0    # deg/s
 
 # Safety timeout (seconds) – abort if goal takes longer than this
 MOVE_TIMEOUT       = 30.0
+
+# Heading hold during straight moves
+# How aggressively to correct drift (tune this if correction is too twitchy or too weak)
+HEADING_KP         = 2.0   # proportional gain: correction = HEADING_KP * yaw_error_radians
+MAX_HEADING_CORRECTION = 0.3  # rad/s – cap so heading hold doesn't overpower forward motion
 # ─────────────────────────────────────────────────────────────────────────────
 
 
@@ -193,11 +198,16 @@ class MoveDistanceServer(Node):
     # ── Linear move phase ─────────────────────────────────────────────────────
 
     def _run_linear(self, goal_handle, feedback, target_distance, linear_speed):
-        """Drive forward or backward target_distance meters. Returns distance traveled."""
-        start_x = self.current_x
-        start_y = self.current_y
-        sign    = 1.0 if target_distance >= 0 else -1.0
-        target  = abs(target_distance)
+        """Drive forward or backward target_distance meters. Returns distance traveled.
+        
+        Uses heading hold to correct drift — records starting yaw and applies a
+        small proportional angular correction throughout the move to keep straight.
+        """
+        start_x   = self.current_x
+        start_y   = self.current_y
+        start_yaw = self.current_yaw   # target heading — stay on this bearing
+        sign      = 1.0 if target_distance >= 0 else -1.0
+        target    = abs(target_distance)
 
         start_time = self.get_clock().now()
         rate = self.create_rate(20)  # 20 Hz control loop
@@ -230,9 +240,20 @@ class MoveDistanceServer(Node):
                     linear_speed * (remaining / DISTANCE_SLOWDOWN)
                 )
 
-            # Publish cmd_vel
+            # ── Heading hold ──────────────────────────────────────────────────
+            # How far have we drifted from our starting heading?
+            yaw_error = angle_diff(start_yaw, self.current_yaw)
+            # Proportional correction — positive error means drifted right, correct left
+            angular_correction = HEADING_KP * yaw_error
+            # Cap the correction so it doesn't overpower forward motion
+            angular_correction = max(-MAX_HEADING_CORRECTION,
+                                     min(MAX_HEADING_CORRECTION, angular_correction))
+            # ─────────────────────────────────────────────────────────────────
+
+            # Publish cmd_vel with heading correction applied
             twist = Twist()
-            twist.linear.x = sign * speed
+            twist.linear.x  = sign * speed
+            twist.angular.z = angular_correction
             self.cmd_pub.publish(twist)
 
             # Feedback
