@@ -170,7 +170,7 @@ class ESP32Bridge(Node):
     
     def feedback_loop(self):
         self.base_controller.feedback_data()
-        if self.base_controller.base_data["T"] == 1001:
+        if self.base_controller.base_data.get["T"] == 1001:
             self.publish_imu_data_raw()
             self.publish_imu_mag()
             self.publish_odom_raw()
