@@ -9,12 +9,7 @@ def generate_launch_description():
             name='esp32_bridge',
             output='screen'
         ),
-        Node(
-            package='beast_controller',
-            executable='keyboard_ctrl',
-            name='keyboard_ctrl',
-            output='screen'
-        ),
+      
         Node(
             package='beast_utils',
             executable='battery_monitor',
