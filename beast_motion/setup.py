@@ -25,6 +25,7 @@ setup(
     entry_points={
         'console_scripts': [
             'odom_publisher = beast_motion.odom_publisher:main',
+            'move_distance_server = beast_motion.move_distance_server:main'
         ],
     },
 )
