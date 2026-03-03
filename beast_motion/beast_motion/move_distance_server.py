@@ -35,11 +35,11 @@ DISTANCE_TOLERANCE = 0.02   # meters  (about 3/4 inch)
 ANGLE_TOLERANCE    = 2.0    # degrees
 
 # Slow-down zone: start decelerating when this close to the goal
-DISTANCE_SLOWDOWN  = 0.15   # meters
+DISTANCE_SLOWDOWN  = 0.25   # meters
 ANGLE_SLOWDOWN     = 20.0   # degrees
 
 # Minimum speeds to keep the robot actually moving while decelerating
-MIN_LINEAR_SPEED   = 0.05   # m/s
+MIN_LINEAR_SPEED   = 0.04   # m/s
 MIN_ANGULAR_SPEED  = 8.0    # deg/s
 
 # Safety timeout (seconds) – abort if goal takes longer than this
@@ -47,7 +47,7 @@ MOVE_TIMEOUT       = 30.0
 
 # Heading hold during straight moves
 # How aggressively to correct drift (tune this if correction is too twitchy or too weak)
-HEADING_KP         = 2.0   # proportional gain: correction = HEADING_KP * yaw_error_radians
+HEADING_KP         = 6.0   # proportional gain: correction = HEADING_KP * yaw_error_radians
 MAX_HEADING_CORRECTION = 0.3  # rad/s – cap so heading hold doesn't overpower forward motion
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -323,7 +323,10 @@ class MoveDistanceServer(Node):
     # ── Helpers ───────────────────────────────────────────────────────────────
 
     def _stop(self):
-        self.cmd_pub.publish(Twist())
+        """Send stop command several times to ensure it registers."""
+        stop = Twist()
+        for _ in range(5):
+            self.cmd_pub.publish(stop)
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────
