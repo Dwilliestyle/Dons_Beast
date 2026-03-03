@@ -1,0 +1,16 @@
+# Goal - what we want the robot to do
+float32 distance        # meters, positive=forward, negative=backward (use 0.0 for turn-only)
+float32 turn_degrees    # degrees, positive=left, negative=right (use 0.0 for straight move)
+float32 linear_speed    # m/s (0.0 = use default)
+float32 angular_speed   # deg/s (0.0 = use default)
+---
+# Result - what happened when finished
+bool success
+float32 distance_traveled   # meters actually traveled
+float32 angle_turned        # degrees actually turned
+string message
+---
+# Feedback - progress updates while running
+float32 distance_remaining  # meters left to travel
+float32 angle_remaining     # degrees left to turn
+float32 current_speed       # m/s current linear speed
