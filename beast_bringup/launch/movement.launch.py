@@ -5,7 +5,7 @@ def generate_launch_description():
     return LaunchDescription([
         Node(
             package='beast_bringup',
-            executable='esp32_bridge',
+            executable='esp32_bridge.py',
             name='esp32_bridge',
             output='screen'
         ),
