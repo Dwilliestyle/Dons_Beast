@@ -139,6 +139,7 @@ class VoiceAssistant(Node):
             weather = re.sub(r'\+', ' ', weather)
             weather = re.sub(r'\s+', ' ', weather)
             weather = weather.strip()
+            weather = weather.replace('F', 'degrees Fahrenheit').strip()
 
             return weather
         except Exception as e:
