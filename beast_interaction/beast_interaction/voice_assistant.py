@@ -130,6 +130,7 @@ class VoiceAssistant(Node):
             url = f'http://wttr.in/{location.replace(" ", "+")}?format=3'
             result = subprocess.run(['curl', '-s', url], capture_output=True, text=True, timeout=30)
             weather = result.stdout.strip()
+            self.get_logger().info(f'Raw weather: {weather}')  
 
             # Remove emojis and clean up symbols
             weather = re.sub(r'[^\x00-\x7F]+', '', weather)
