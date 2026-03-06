@@ -123,26 +123,22 @@ class VoiceAssistant(Node):
             # Extract just the location
             location = question.lower()
             for phrase in ['what is the current weather in', 'what is the current weather for',
-                           'what is the weather report for', 'what is the weather in',
-                           'what is the temperature in', 'weather in', 'temperature in',
-                           'weather for', 'temperature for', 'what is the weather',
-                            'what is the current']:
+                        'what is the weather report for', 'what is the weather in',
+                        'what is the temperature in', 'weather in', 'temperature in',
+                        'weather for', 'temperature for', 'what is the weather',
+                        'what is the current']:
                 location = location.replace(phrase, '').strip()
-
-            # Remove emojis and clean up symbols
-            weather = re.sub(r'[^\x00-\x7F]+', '', weather)
-            weather = re.sub(r'\+', ' ', weather)        # Replace + with space
-            weather = re.sub(r'\s+', ' ', weather)       # Collapse multiple spaces
-            weather = weather.strip()
 
             url = f'http://wttr.in/{location.replace(" ", "+")}?format="%l:+%C+%t+humidity+%h"'
             result = subprocess.run(['curl', '-s', url], capture_output=True, text=True, timeout=30)
             weather = result.stdout.strip()
-            self.get_logger().info(f'Raw weather: {weather}')  
+            self.get_logger().info(f'Raw weather: {weather}')
 
             # Remove emojis and clean up symbols
             weather = re.sub(r'[^\x00-\x7F]+', '', weather)
-            weather = weather.replace('+', ' ').strip()
+            weather = re.sub(r'\+', ' ', weather)
+            weather = re.sub(r'\s+', ' ', weather)
+            weather = weather.strip()
 
             return weather
         except Exception as e:
