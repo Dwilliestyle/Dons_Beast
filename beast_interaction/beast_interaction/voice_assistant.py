@@ -10,6 +10,7 @@ import threading
 import time
 from ddgs import DDGS
 import re
+import urllib.request
 from beast_msgs.srv import SetLEDBrightness
 
 class VoiceAssistant(Node):
@@ -116,6 +117,16 @@ class VoiceAssistant(Node):
         except Exception as e:
             self.get_logger().error(f'Search error: {e}')
             return "Sorry, I had trouble searching for that"
+        
+    def get_weather(self, location):
+        try:
+            url = f'http://wttr.in/{location.replace(" ", "+")}?format=3'
+            with urllib.request.urlopen(url, timeout=5) as response:
+                weather = response.read().decode('utf-8').strip()
+            return weather
+        except Exception as e:
+            self.get_logger().error(f'Weather error: {e}')
+            return "Sorry, I could not get the weather right now"
 
     def listen_for_wake_word(self):
         while rclpy.ok():
@@ -147,7 +158,10 @@ class VoiceAssistant(Node):
                         breath_thread = threading.Thread(target=self.breath_light, args=(stop_breathing,))
                         breath_thread.start()
 
-                        answer = self.search_and_answer(question)
+                        if 'weather' in question.lower() or 'temperature' in question.lower():
+                            answer = self.get_weather(question)
+                        else:
+                            answer = self.search_and_answer(question)
                         self.get_logger().info(f'Answer: {answer}')
                         self.speak(answer)                    # blocking — waits for speech to finish
 
