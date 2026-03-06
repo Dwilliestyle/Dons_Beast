@@ -138,8 +138,10 @@ class VoiceAssistant(Node):
             weather = re.sub(r'[^\x00-\x7F]+', '', weather)
             weather = re.sub(r'\+', ' ', weather)
             weather = re.sub(r'\s+', ' ', weather)
+            weather = weather.replace('F ', ' degrees Fahrenheit ')
+            weather = weather.replace('%', ' percent')
+            weather = weather.replace('"', '')              # Remove quotes
             weather = weather.strip()
-            weather = weather.replace('F', 'degrees Fahrenheit').strip()
 
             return weather
         except Exception as e:
