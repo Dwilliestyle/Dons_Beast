@@ -120,26 +120,26 @@ class VoiceAssistant(Node):
         
     def get_weather(self, question):
         try:
-            # Extract just the location by removing common question words
+            # Extract just the location
             location = question.lower()
-            for phrase in ['what is the weather report for', 'what is the weather in', 
+            for phrase in ['what is the weather report for', 'what is the weather in',
                         'what is the temperature in', 'weather in', 'temperature in',
                         'weather for', 'temperature for', 'what is the weather']:
                 location = location.replace(phrase, '').strip()
 
             url = f'http://wttr.in/{location.replace(" ", "+")}?format=3'
-            with urllib.request.urlopen(url, timeout=5) as response:
-                weather = response.read().decode('utf-8').strip()
-            
+            result = subprocess.run(['curl', '-s', url], capture_output=True, text=True, timeout=10)
+            weather = result.stdout.strip()
+
             # Remove emojis and clean up symbols
-            weather = re.sub(r'[^\x00-\x7F]+', '', weather)  # Remove non-ASCII (emojis)
-            weather = weather.replace('+', ' ').strip()       # Remove + signs
-            
+            weather = re.sub(r'[^\x00-\x7F]+', '', weather)
+            weather = weather.replace('+', ' ').strip()
+
             return weather
         except Exception as e:
             self.get_logger().error(f'Weather error: {e}')
             return "Sorry, I could not get the weather right now"
-
+        
     def listen_for_wake_word(self):
         while rclpy.ok():
             self.get_logger().info('Listening for wake word...')
