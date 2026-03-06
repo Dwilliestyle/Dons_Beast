@@ -128,7 +128,7 @@ class VoiceAssistant(Node):
                 location = location.replace(phrase, '').strip()
 
             url = f'http://wttr.in/{location.replace(" ", "+")}?format=3'
-            result = subprocess.run(['curl', '-s', url], capture_output=True, text=True, timeout=10)
+            result = subprocess.run(['curl', '-s', url], capture_output=True, text=True, timeout=30)
             weather = result.stdout.strip()
 
             # Remove emojis and clean up symbols
