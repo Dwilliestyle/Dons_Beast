@@ -7,6 +7,7 @@ import speech_recognition as sr
 from datetime import datetime
 import os
 import threading
+import time
 from ddgs import DDGS
 import re
 from beast_msgs.srv import SetLEDBrightness
@@ -31,7 +32,7 @@ class VoiceAssistant(Node):
             self.get_logger().warn('Light service not available')
             return
         req = SetLEDBrightness.Request()
-        req.brightness = 1.0
+        req.brightness = 255.0
         self.light_client.call_async(req)
         self.get_logger().info('Headlights ON')
 
@@ -48,7 +49,25 @@ class VoiceAssistant(Node):
         self.get_logger().info('Headlights OFF')
         self._lights_timer = None
 
-    # ---------- Existing methods (mostly unchanged) ----------
+    def breath_light(self, stop_event):
+        """Breathing light effect - runs until stop_event is set"""
+        while not stop_event.is_set():
+            for i in range(0, 255, 10):
+                if stop_event.is_set():
+                    break
+                req = SetLEDBrightness.Request()
+                req.brightness = float(i)
+                self.light_client.call_async(req)
+                time.sleep(0.05)
+            for i in range(255, 0, -10):
+                if stop_event.is_set():
+                    break
+                req = SetLEDBrightness.Request()
+                req.brightness = float(i)
+                self.light_client.call_async(req)
+                time.sleep(0.05)
+
+    # ---------- Existing methods ----------
 
     def speak(self, text):
         """Use espeak to make the robot speak — blocking so we know when it's done"""
@@ -113,7 +132,7 @@ class VoiceAssistant(Node):
                         'hey b' in text_lower):
 
                     self.get_logger().info('Wake word detected!')
-                    self.lights_on()                          # <-- LIGHTS ON
+                    self.lights_on()                          # Static bright on wake word
                     self.speak("Yes?")
 
                     self.get_logger().info('Listening for question...')
@@ -122,13 +141,24 @@ class VoiceAssistant(Node):
 
                     if question:
                         self.get_logger().info(f'Question: "{question}"')
+
+                        # Start breathing light while searching and answering
+                        stop_breathing = threading.Event()
+                        breath_thread = threading.Thread(target=self.breath_light, args=(stop_breathing,))
+                        breath_thread.start()
+
                         answer = self.search_and_answer(question)
                         self.get_logger().info(f'Answer: {answer}')
                         self.speak(answer)                    # blocking — waits for speech to finish
-                        self.lights_off_delayed(3.0)          # <-- LIGHTS OFF after 3s
+
+                        # Stop breathing and turn off after delay
+                        stop_breathing.set()
+                        breath_thread.join()
+                        self.lights_off_delayed(3.0)
+
                     else:
                         self.speak("I didn't catch that")
-                        self.lights_off_delayed(2.0)          # <-- LIGHTS OFF even if no question heard
+                        self.lights_off_delayed(2.0)
 
 
 def main(args=None):
