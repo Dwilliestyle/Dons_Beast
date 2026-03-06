@@ -118,11 +118,23 @@ class VoiceAssistant(Node):
             self.get_logger().error(f'Search error: {e}')
             return "Sorry, I had trouble searching for that"
         
-    def get_weather(self, location):
+    def get_weather(self, question):
         try:
+            # Extract just the location by removing common question words
+            location = question.lower()
+            for phrase in ['what is the weather report for', 'what is the weather in', 
+                        'what is the temperature in', 'weather in', 'temperature in',
+                        'weather for', 'temperature for', 'what is the weather']:
+                location = location.replace(phrase, '').strip()
+
             url = f'http://wttr.in/{location.replace(" ", "+")}?format=3'
             with urllib.request.urlopen(url, timeout=5) as response:
                 weather = response.read().decode('utf-8').strip()
+            
+            # Remove emojis and clean up symbols
+            weather = re.sub(r'[^\x00-\x7F]+', '', weather)  # Remove non-ASCII (emojis)
+            weather = weather.replace('+', ' ').strip()       # Remove + signs
+            
             return weather
         except Exception as e:
             self.get_logger().error(f'Weather error: {e}')
