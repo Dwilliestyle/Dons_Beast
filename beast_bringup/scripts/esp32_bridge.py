@@ -293,7 +293,7 @@ class ESP32Bridge(Node):
         response.success = True
         response.message = f"Headlights set to brightness: {brightness}"
         
-        self.get_logger().info(f"Headlights brightness: {brightness}")
+        self.get_logger().debug(f"Headlights brightness: {brightness}")
         
         return response
 
