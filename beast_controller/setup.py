@@ -15,7 +15,7 @@ setup(
     zip_safe=True,
     maintainer='don',
     maintainer_email='dwilliestyle@gmail.com',
-    description='TODO: Package description',
+    description='Package including teleops for robot control',
     license='TODO: License declaration',
     extras_require={
         'test': [
@@ -24,7 +24,8 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'keyboard_ctrl = beast_controller.keyboard_ctrl:main'
+            'keyboard_ctrl = beast_controller.keyboard_ctrl:main',
+            'joy_teleop = beast_controller.joy_teleop:main'
         ],
     },
 )
