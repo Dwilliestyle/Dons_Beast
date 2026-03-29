@@ -10,7 +10,7 @@ import time
 from std_msgs.msg import Header, Float32MultiArray, Float32
 from geometry_msgs.msg import Twist
 from sensor_msgs.msg import Imu, MagneticField, JointState
-from beast_msgs.srv import SetLEDBrightness
+from beast_msgs.srv import SetLEDBrightness, UpdateOLED
 
 # Helper class for reading lines from a serial port
 class ReadLine:
@@ -145,6 +145,9 @@ class ESP32Bridge(Node):
         
         # Low battery warning state
         self.last_warning_time = 0
+
+        #OLED service
+        self.oled_service = self.create_service(UpdateOLED, 'update_oled', self.oled_service_callback)
         
         self.get_logger().info('ESP32 Bridge started successfully')
 
@@ -295,6 +298,13 @@ class ESP32Bridge(Node):
         
         self.get_logger().debug(f"Headlights brightness: {brightness}")
         
+        return response
+
+    def oled_service_callback(self, request, response):
+        data = {'T': 3, 'lineNum': int(request.line_num), 'Text': request.text}
+        self.base_controller.send_command(data)
+        response.success = True
+        response.message = 'OK'
         return response
 
 def main(args=None):

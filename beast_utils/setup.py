@@ -26,6 +26,7 @@ setup(
         'console_scripts': [
             'battery_monitor = beast_utils.battery_monitor:main',
             'oled_display = beast_utils.oled_display:main',
+            'oled_server = beast_utils.oled_server:main',
             'safety_stop = beast_utils.safety_stop:main'
         ],
     },

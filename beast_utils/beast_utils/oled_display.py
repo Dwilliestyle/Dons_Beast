@@ -114,34 +114,25 @@ class OLEDDisplay(Node):
             self.get_logger().error(f'Failed to call OLED service: {e}')
     
     def update_display(self):
-        """Update all OLED display lines with delays"""
-        try:
-            # Line 0: Current time
-            current_time = datetime.now().strftime('%H:%M:%S')
-            self.send_oled_update(0, f"Time: {current_time}")
-            time.sleep(self.oled_delay)
-            
-            # Line 1: Robot status
-            self.send_oled_update(1, f"Status: {self.robot_status}")
-            time.sleep(self.oled_delay)
-            
-            # Line 2: Battery voltage with warning indicators
-            if self.battery_voltage is not None:
-                if self.battery_voltage < 7.0:
-                    self.send_oled_update(2, f"BATT!: {self.battery_voltage:.2f}V!")
-                elif self.battery_voltage < 7.5:
-                    self.send_oled_update(2, f"Batt!: {self.battery_voltage:.2f}V")
-                else:
-                    self.send_oled_update(2, f"Batt: {self.battery_voltage:.2f}V")
+        current_time = datetime.now().strftime('%H:%M:%S')
+        self.send_oled_update(0, f"Time: {current_time}")
+        time.sleep(self.oled_delay)
+
+        self.send_oled_update(1, f"Status: {self.robot_status}")
+        time.sleep(self.oled_delay)
+
+        if self.battery_voltage is not None:
+            if self.battery_voltage < 7.0:
+                self.send_oled_update(2, f"BATT!: {self.battery_voltage:.2f}V!")
+            elif self.battery_voltage < 7.5:
+                self.send_oled_update(2, f"Batt!: {self.battery_voltage:.2f}V")
             else:
-                self.send_oled_update(2, "Batt: --.--V")
-            time.sleep(self.oled_delay)
-            
-            # Line 3: IP Address
-            self.send_oled_update(3, f"IP: {self.ip_address}")
-                
-        except Exception as e:
-            self.get_logger().error(f'OLED update error: {e}')
+                self.send_oled_update(2, f"Batt: {self.battery_voltage:.2f}V")
+        else:
+            self.send_oled_update(2, "Batt: --.--V")
+        time.sleep(self.oled_delay)
+
+        self.send_oled_update(3, f"IP:{self.ip_address}")
 
 
 def main(args=None):
