@@ -8,10 +8,13 @@ from datetime import datetime
 import os
 import threading
 import time
+import math
+from geometry_msgs.msg import Twist
 from ddgs import DDGS
 import re
-import urllib.request
 from beast_msgs.srv import SetLEDBrightness
+from beast_interaction import sound_localizer
+
 
 class VoiceAssistant(Node):
     def __init__(self):
@@ -164,6 +167,11 @@ class VoiceAssistant(Node):
 
                     self.get_logger().info('Wake word detected!')
                     self.lights_on()                          # Static bright on wake word
+                    # Localize the speaker and rotate to face them
+                    angle = sound_localizer.localize()
+                    if angle is not None:
+                        self.get_logger().info(f'Speaker at {angle:.1f}° — rotating to face')
+                        self.rotate_to_angle(angle)
                     self.speak("Yes?")
 
                     self.get_logger().info('Listening for question...')
@@ -193,6 +201,34 @@ class VoiceAssistant(Node):
                     else:
                         self.speak("I didn't catch that")
                         self.lights_off_delayed(2.0)
+
+    def rotate_to_angle(self, angle_deg):
+        """
+        Publish a cmd_vel rotation to face the given angle.
+        Positive angle = turn left, negative = turn right.
+        """
+        
+
+        if not hasattr(self, '_cmd_vel_pub'):
+            self._cmd_vel_pub = self.create_publisher(Twist, '/cmd_vel', 10)
+
+        # How long to rotate at a fixed speed to cover the angle
+        angular_speed = 0.8   # rad/s — adjust if too fast/slow
+        angle_rad = math.radians(angle_deg)
+        duration = abs(angle_rad) / angular_speed
+
+        twist = Twist()
+        twist.angular.z = angular_speed if angle_rad > 0 else -angular_speed
+
+        rate = 20   # Hz
+        steps = int(duration * rate)
+        
+        for _ in range(steps):
+            self._cmd_vel_pub.publish(twist)
+            time.sleep(1.0 / rate)
+
+        # Stop
+        self._cmd_vel_pub.publish(Twist())
 
 
 def main(args=None):
