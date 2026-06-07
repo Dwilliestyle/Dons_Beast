@@ -26,7 +26,6 @@ setup(
         'console_scripts': [
 	        'microphone_test = beast_interaction.microphone_test:main',
             'voice_assistant = beast_interaction.voice_assistant:main',
-            'sound_localizer = beast_interaction.sound_localizer:main'
         ],
     },
 )

@@ -22,7 +22,7 @@ MAX_DELAY_SAMPLES = int(np.ceil(MIC_SPACING / SPEED_OF_SOUND * SAMPLE_RATE))  # 
 REAR_OFFSET_DEG = 180.0
 
 
-def capture_stereo_snapshot(duration=1.0, device='hw:1,0'):
+def capture_stereo_snapshot(duration=1.0, device='plughw:CARD=Device,DEV=0'):
     """
     Record a short stereo clip from the soundboard.
     Returns (left_channel, right_channel) as numpy float arrays,
