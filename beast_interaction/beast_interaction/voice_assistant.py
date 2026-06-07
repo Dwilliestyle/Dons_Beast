@@ -40,10 +40,8 @@ class VoiceAssistant(Node):
 
     def lights_on(self):
         """Turn both light channels on at full brightness."""
-        for client in (self.light_client_io4, self.light_client_io5):
-            if not client.service_is_ready():
-                self.get_logger().warn('A light service is not available')
-                return
+        self.light_client_io4.wait_for_service(timeout_sec=3.0)
+        self.light_client_io5.wait_for_service(timeout_sec=3.0)
         self._set_brightness(self.light_client_io4, 255.0)
         self._set_brightness(self.light_client_io5, 255.0)
         self.get_logger().info('Headlights ON')
