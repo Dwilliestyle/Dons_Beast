@@ -134,7 +134,13 @@ class ESP32Bridge(Node):
         # Subscribers for command data
         self.cmd_vel_sub_ = self.create_subscription(Twist, "cmd_vel", self.cmd_vel_callback, 10)
         self.joint_states_sub = self.create_subscription(JointState, 'ugv/joint_states', self.joint_states_callback, 10)
+        
+        self.io4_brightness = 0.0  # track IO4 so IO5 calls don't clobber it
+        self.io5_brightness = 0.0  # track IO5 so IO4 calls don't clobber it
+        
+        # Service calls for the headlights
         self.led_service = self.create_service(SetLEDBrightness, 'ugv/set_headlights', self.led_service_callback)
+        self.led_service_io5 = self.create_service(SetLEDBrightness, 'ugv/set_headlights_io5', self.led_service_io5_callback)
         
         # Timer to periodically read sensor feedback
         timer_period = 1.0 / feedback_rate
@@ -275,29 +281,27 @@ class ESP32Bridge(Node):
         self.base_controller.send_command(joint_data)
 
     def led_service_callback(self, request, response):
-        """Service callback to control headlight brightness"""
-        brightness = request.brightness
-        
-        # Clamp brightness to valid range
-        if brightness < 0.0:
-            brightness = 0.0
-        elif brightness > 255.0:
-            brightness = 255.0
-        
-        # Send LED control command to ESP32
+        self.io4_brightness = max(0.0, min(255.0, request.brightness))
         led_ctrl_data = {
-            'T': 132, 
-            "IO4": brightness,
-            "IO5": brightness,
+            'T': 132,
+            "IO4": self.io4_brightness,
+            "IO5": self.io5_brightness,  # always send both, preserve IO5
         }
         self.base_controller.send_command(led_ctrl_data)
-        
-        # Set response
         response.success = True
-        response.message = f"Headlights set to brightness: {brightness}"
-        
-        self.get_logger().debug(f"Headlights brightness: {brightness}")
-        
+        response.message = f"IO4 set to brightness: {self.io4_brightness}"
+        return response
+    
+    def led_service_io5_callback(self, request, response):
+        self.io5_brightness = max(0.0, min(255.0, request.brightness))
+        led_ctrl_data = {
+            'T': 132,
+            "IO4": self.io4_brightness,  # always send both, preserve IO4
+            "IO5": self.io5_brightness,
+        }
+        self.base_controller.send_command(led_ctrl_data)
+        response.success = True
+        response.message = f"IO5 set to brightness: {self.io5_brightness}"
         return response
 
     def oled_service_callback(self, request, response):
