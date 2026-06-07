@@ -60,31 +60,25 @@ class VoiceAssistant(Node):
         self._lights_timer = None
 
     def breath_light(self, stop_event: threading.Event):
-        """
-        Alternating breathing effect between IO4 and IO5.
+        STEP  = 5
+        DELAY = 0.02
 
-        IO4 fades 0→255 while IO5 fades 255→0, then they swap.
-        The two lights are always mirror images of each other,
-        giving a smooth cross-fade / heartbeat look.
-
-        Tune STEP and DELAY to taste:
-          STEP  — bigger = choppier but fewer service calls
-          DELAY — bigger = slower sweep
-        """
-        STEP  = 5     # brightness increment per tick
-        DELAY = 0.02  # seconds between ticks
+        # Both lights full-bright briefly before alternating starts
+        self._set_brightness(self.light_client_io4, 255.0)
+        self._set_brightness(self.light_client_io5, 255.0)
+        time.sleep(0.5)
 
         while not stop_event.is_set():
-            # Phase 1: IO4 ramps UP, IO5 ramps DOWN
-            for brightness in range(0, 256, STEP):
+            # Phase 1: IO4 ramps DOWN, IO5 ramps UP
+            for brightness in range(255, -1, -STEP):
                 if stop_event.is_set():
                     return
                 self._set_brightness(self.light_client_io4, float(brightness))
                 self._set_brightness(self.light_client_io5, float(255 - brightness))
                 time.sleep(DELAY)
 
-            # Phase 2: IO4 ramps DOWN, IO5 ramps UP
-            for brightness in range(255, -1, -STEP):
+            # Phase 2: IO4 ramps UP, IO5 ramps DOWN
+            for brightness in range(0, 256, STEP):
                 if stop_event.is_set():
                     return
                 self._set_brightness(self.light_client_io4, float(brightness))
