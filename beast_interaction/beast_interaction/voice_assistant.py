@@ -20,8 +20,9 @@ class VoiceAssistant(Node):
     def __init__(self):
         super().__init__('voice_assistant')
 
-        # LED service client
-        self.light_client = self.create_client(SetLEDBrightness, 'ugv/set_headlights')
+        # LED service clients — one per IO channel
+        self.light_client_io4 = self.create_client(SetLEDBrightness, 'ugv/set_headlights')
+        self.light_client_io5 = self.create_client(SetLEDBrightness, 'ugv/set_headlights_io5')
         self._lights_timer = None
 
         self.get_logger().info('Voice Assistant ready!')
@@ -31,45 +32,66 @@ class VoiceAssistant(Node):
 
     # ---------- Light helpers ----------
 
-    def lights_on(self):
-        if not self.light_client.service_is_ready():
-            self.get_logger().warn('Light service not available')
-            return
+    def _set_brightness(self, client, brightness: float):
+        """Fire-and-forget brightness call on the given client."""
         req = SetLEDBrightness.Request()
-        req.brightness = 255.0
-        self.light_client.call_async(req)
+        req.brightness = brightness
+        client.call_async(req)
+
+    def lights_on(self):
+        """Turn both light channels on at full brightness."""
+        for client in (self.light_client_io4, self.light_client_io5):
+            if not client.service_is_ready():
+                self.get_logger().warn('A light service is not available')
+                return
+        self._set_brightness(self.light_client_io4, 255.0)
+        self._set_brightness(self.light_client_io5, 255.0)
         self.get_logger().info('Headlights ON')
 
     def lights_off_delayed(self, delay=3.0):
+        """Turn both lights off after a delay."""
         if self._lights_timer is not None:
             self._lights_timer.cancel()
         self._lights_timer = threading.Timer(delay, self._lights_off_callback)
         self._lights_timer.start()
 
     def _lights_off_callback(self):
-        req = SetLEDBrightness.Request()
-        req.brightness = 0.0
-        self.light_client.call_async(req)
+        self._set_brightness(self.light_client_io4, 0.0)
+        self._set_brightness(self.light_client_io5, 0.0)
         self.get_logger().info('Headlights OFF')
         self._lights_timer = None
 
-    def breath_light(self, stop_event):
-        """Breathing light effect - runs until stop_event is set"""
+    def breath_light(self, stop_event: threading.Event):
+        """
+        Alternating breathing effect between IO4 and IO5.
+
+        IO4 fades 0→255 while IO5 fades 255→0, then they swap.
+        The two lights are always mirror images of each other,
+        giving a smooth cross-fade / heartbeat look.
+
+        Tune STEP and DELAY to taste:
+          STEP  — bigger = choppier but fewer service calls
+          DELAY — bigger = slower sweep
+        """
+        STEP  = 5     # brightness increment per tick
+        DELAY = 0.02  # seconds between ticks
+
         while not stop_event.is_set():
-            for i in range(0, 255, 10):
+            # Phase 1: IO4 ramps UP, IO5 ramps DOWN
+            for brightness in range(0, 256, STEP):
                 if stop_event.is_set():
-                    break
-                req = SetLEDBrightness.Request()
-                req.brightness = float(i)
-                self.light_client.call_async(req)
-                time.sleep(0.05)
-            for i in range(255, 0, -10):
+                    return
+                self._set_brightness(self.light_client_io4, float(brightness))
+                self._set_brightness(self.light_client_io5, float(255 - brightness))
+                time.sleep(DELAY)
+
+            # Phase 2: IO4 ramps DOWN, IO5 ramps UP
+            for brightness in range(255, -1, -STEP):
                 if stop_event.is_set():
-                    break
-                req = SetLEDBrightness.Request()
-                req.brightness = float(i)
-                self.light_client.call_async(req)
-                time.sleep(0.05)
+                    return
+                self._set_brightness(self.light_client_io4, float(brightness))
+                self._set_brightness(self.light_client_io5, float(255 - brightness))
+                time.sleep(DELAY)
 
     # ---------- Existing methods ----------
 
@@ -120,16 +142,15 @@ class VoiceAssistant(Node):
         except Exception as e:
             self.get_logger().error(f'Search error: {e}')
             return "Sorry, I had trouble searching for that"
-        
+
     def get_weather(self, question):
         try:
-            # Extract just the location
             location = question.lower()
             for phrase in ['what is the current weather in', 'what is the current weather for',
-                        'what is the weather report for', 'what is the weather in',
-                        'what is the temperature in', 'weather in', 'temperature in',
-                        'weather for', 'temperature for', 'what is the weather',
-                        'what is the current']:
+                           'what is the weather report for', 'what is the weather in',
+                           'what is the temperature in', 'weather in', 'temperature in',
+                           'weather for', 'temperature for', 'what is the weather',
+                           'what is the current']:
                 location = location.replace(phrase, '').strip()
 
             url = f'http://wttr.in/{location.replace(" ", "+")}?format="%l:+%C+%t+humidity+%h"'
@@ -137,20 +158,19 @@ class VoiceAssistant(Node):
             weather = result.stdout.strip()
             self.get_logger().info(f'Raw weather: {weather}')
 
-            # Remove emojis and clean up symbols
             weather = re.sub(r'[^\x00-\x7F]+', '', weather)
             weather = re.sub(r'\+', ' ', weather)
             weather = re.sub(r'\s+', ' ', weather)
             weather = weather.replace('F ', ' degrees Fahrenheit ')
             weather = weather.replace('%', ' percent')
-            weather = weather.replace('"', '')              # Remove quotes
+            weather = weather.replace('"', '')
             weather = weather.strip()
 
             return weather
         except Exception as e:
             self.get_logger().error(f'Weather error: {e}')
             return "Sorry, I could not get the weather right now"
-        
+
     def listen_for_wake_word(self):
         while rclpy.ok():
             self.get_logger().info('Listening for wake word...')
@@ -166,7 +186,7 @@ class VoiceAssistant(Node):
                         'hey b' in text_lower):
 
                     self.get_logger().info('Wake word detected!')
-                    self.lights_on()                          # Static bright on wake word
+                    self.lights_on()                          # Both lights full-bright on wake word
                     # Localize the speaker and rotate to face them
                     angle = sound_localizer.localize()
                     if angle is not None:
@@ -181,9 +201,13 @@ class VoiceAssistant(Node):
                     if question:
                         self.get_logger().info(f'Question: "{question}"')
 
-                        # Start breathing light while searching and answering
+                        # Start alternating breath while thinking / speaking
                         stop_breathing = threading.Event()
-                        breath_thread = threading.Thread(target=self.breath_light, args=(stop_breathing,))
+                        breath_thread = threading.Thread(
+                            target=self.breath_light,
+                            args=(stop_breathing,),
+                            daemon=True
+                        )
                         breath_thread.start()
 
                         if 'weather' in question.lower() or 'temperature' in question.lower():
@@ -207,13 +231,10 @@ class VoiceAssistant(Node):
         Publish a cmd_vel rotation to face the given angle.
         Positive angle = turn left, negative = turn right.
         """
-        
-
         if not hasattr(self, '_cmd_vel_pub'):
             self._cmd_vel_pub = self.create_publisher(Twist, '/cmd_vel', 10)
 
-        # How long to rotate at a fixed speed to cover the angle
-        angular_speed = 0.8   # rad/s — adjust if too fast/slow
+        angular_speed = 0.8   # rad/s
         angle_rad = math.radians(angle_deg)
         duration = abs(angle_rad) / angular_speed
 
@@ -222,12 +243,11 @@ class VoiceAssistant(Node):
 
         rate = 20   # Hz
         steps = int(duration * rate)
-        
+
         for _ in range(steps):
             self._cmd_vel_pub.publish(twist)
             time.sleep(1.0 / rate)
 
-        # Stop
         self._cmd_vel_pub.publish(Twist())
 
 
