@@ -35,7 +35,7 @@ def capture_stereo_snapshot(duration=1.0, device='plughw:CARD=Device,DEV=0'):
         '-f', 'S16_LE',
         '-c', '2',
         '-r', str(SAMPLE_RATE),
-        '-d', str(duration),
+        '-d', str(int(duration)),
         filename
     ]
     try:
