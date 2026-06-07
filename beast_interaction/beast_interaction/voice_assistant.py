@@ -72,7 +72,7 @@ class VoiceAssistant(Node):
             # Phase 1: IO4 ramps DOWN, IO5 ramps UP
             for brightness in range(255, -1, -STEP):
                 if stop_event.is_set():
-                    return
+                    break
                 self._set_brightness(self.light_client_io4, float(brightness))
                 self._set_brightness(self.light_client_io5, float(255 - brightness))
                 time.sleep(DELAY)
@@ -80,11 +80,15 @@ class VoiceAssistant(Node):
             # Phase 2: IO4 ramps UP, IO5 ramps DOWN
             for brightness in range(0, 256, STEP):
                 if stop_event.is_set():
-                    return
+                    break
                 self._set_brightness(self.light_client_io4, float(brightness))
                 self._set_brightness(self.light_client_io5, float(255 - brightness))
                 time.sleep(DELAY)
 
+        # Stopped mid-cycle — make sure both lights are off cleanly
+        self._set_brightness(self.light_client_io4, 0.0)
+        self._set_brightness(self.light_client_io5, 0.0)
+        
     # ---------- Existing methods ----------
 
     def speak(self, text):
