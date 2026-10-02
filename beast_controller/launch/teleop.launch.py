@@ -57,7 +57,7 @@ def generate_launch_description():
         # Joy Teleop Node - only launch if use_joystick is true
         Node(
             package='beast_controller',
-            executable='joy_teleop.py',
+            executable='joy_teleop',
             name='joy_teleop',
             parameters=[
                 config_file,
@@ -71,7 +71,7 @@ def generate_launch_description():
         # Keyboard Teleop Node - only launch if use_joystick is false
         Node(
             package='beast_controller',
-            executable='keyboard_ctrl.py',
+            executable='keyboard_ctrl',
             name='keyboard_ctrl',
             parameters=[
                 config_file,
