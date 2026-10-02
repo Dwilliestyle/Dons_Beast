@@ -5,21 +5,32 @@ Launches all essential nodes with configuration parameters
 """
 from launch import LaunchDescription
 from launch_ros.actions import Node
-from launch.actions import DeclareLaunchArgument
+from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 from ament_index_python.packages import get_package_share_directory
+from launch.launch_description_sources import PythonLaunchDescriptionSource
 import os
 
 def generate_launch_description():
     pkg_share = get_package_share_directory('beast_bringup')
     config_file = os.path.join(pkg_share, 'config', 'beast_params.yaml')
     use_sim_time = LaunchConfiguration('use_sim_time', default='false')
+    # Get path to teleop launch file
+    teleop_launch = os.path.join(get_package_share_directory('beast_controller'), 
+                                 'launch', 'teleop.launch.py')
+    use_joystick = LaunchConfiguration('use_joystick', default='true')
 
     return LaunchDescription([
         DeclareLaunchArgument(
             'use_sim_time',
             default_value='false',
             description='Use simulation time if true'
+        ),
+
+        DeclareLaunchArgument(
+            'use_joystick',
+            default_value='true',
+            description='Use joystick teleop if true, keyboard teleop if false'
         ),
 
         # ESP32 Bridge Node
@@ -117,5 +128,14 @@ def generate_launch_description():
                 {'angle_crop_min': 135.0},
                 {'angle_crop_max': 225.0},
             ]
+        ),
+
+        # Teleop (joystick or keyboard)
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(teleop_launch),
+            launch_arguments={
+                'use_sim_time': use_sim_time,
+                'use_joystick': use_joystick,
+            }.items()
         ),
     ])
