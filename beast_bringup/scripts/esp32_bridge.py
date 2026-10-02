@@ -320,11 +320,14 @@ def main(args=None):
     except KeyboardInterrupt:
         pass
     finally:
-        # Send stop command before shutting down
-        node.send_stop_command()
+        # Write the stop directly so it goes out before the port closes
+        stop = {'T': '13', 'X': 0.0, 'Z': 0.0}
+        node.base_controller.ser.write((json.dumps(stop) + '\n').encode('utf-8'))
+        node.base_controller.ser.flush()
         node.base_controller.close()
         node.destroy_node()
-        rclpy.shutdown()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 if __name__ == '__main__':
     main()
