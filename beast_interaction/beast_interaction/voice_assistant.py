@@ -270,7 +270,8 @@ def main(args=None):
     rclpy.init(args=args, signal_handler_options=SignalHandlerOptions.NO)
     node = VoiceAssistant()
     try:
-        rclpy.spin(node)
+        while rclpy.ok():
+            rclpy.spin_once(node, timeout_sec=0.2)
     except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
