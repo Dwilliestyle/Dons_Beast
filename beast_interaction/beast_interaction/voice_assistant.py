@@ -237,7 +237,7 @@ class VoiceAssistant(Node):
         if not hasattr(self, '_cmd_vel_pub'):
             self._cmd_vel_pub = self.create_publisher(Twist, '/cmd_vel', 10)
 
-        angular_speed = 0.8   # rad/s
+        angular_speed = 1.5   # rad/s
         angle_rad = math.radians(angle_deg)
         duration = abs(angle_rad) / angular_speed
 
