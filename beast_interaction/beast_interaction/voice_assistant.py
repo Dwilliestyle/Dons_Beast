@@ -94,8 +94,15 @@ class VoiceAssistant(Node):
     def speak(self, text):
         """Use espeak to make the robot speak — blocking so we know when it's done"""
         self.get_logger().info(f'Speaking: {text}')
-        subprocess.run(['espeak', '-a', '200', '-s', '130', text], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-
+        espeak = subprocess.Popen(['espeak', '-a', '200', '-s', '130', '--stdout', text],
+                                  stdout=subprocess.PIPE)
+        aplay = subprocess.run(['aplay', '-q', '-D', 'plughw:USBAudio,0'],
+                               stdin=espeak.stdout, stderr=subprocess.PIPE, text=True)
+        espeak.stdout.close()
+        espeak.wait()
+        if aplay.returncode != 0:
+            self.get_logger().error(f'aplay failed: {aplay.stderr.strip()}')
+            
     def record_audio(self, duration=3):
         filename_48k = f'/tmp/voice_48k_{datetime.now().strftime("%Y%m%d_%H%M%S")}.wav'
         filename_16k = f'/tmp/voice_{datetime.now().strftime("%Y%m%d_%H%M%S")}.wav'
