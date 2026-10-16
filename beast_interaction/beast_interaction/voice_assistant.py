@@ -187,8 +187,16 @@ class VoiceAssistant(Node):
     def listen_for_wake_word(self):
         while rclpy.ok() and not self._stop.is_set():
             self.get_logger().info('Listening for wake word...')
+            stereo_proc, stereo_file = sound_localizer.start_stereo_capture(duration=3)
             audio_file = self.record_audio(duration=3)
+            stereo_proc.wait()
             text = self.transcribe_audio(audio_file)
+
+            angle = None
+            if text and any(w in text.lower() for w in ('beast', 'based', 'hey b')):
+                angle = sound_localizer.localize_file(stereo_file)
+            if os.path.exists(stereo_file):
+                os.remove(stereo_file)
 
             if text:
                 self.get_logger().info(f'Heard: "{text}"')
@@ -201,7 +209,7 @@ class VoiceAssistant(Node):
                     self.get_logger().info('Wake word detected!')
                     self.lights_on()                          # Both lights full-bright on wake word
                     # Localize the speaker and rotate to face them
-                    angle = sound_localizer.localize()
+                    
                     if angle is not None:
                         self.get_logger().info(f'Speaker at {angle:.1f}° — rotating to face')
                         self.rotate_to_angle(angle)
