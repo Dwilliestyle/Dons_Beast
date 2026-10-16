@@ -253,9 +253,9 @@ class VoiceAssistant(Node):
                         self.lights_off_delayed(2.0)
 
     def _imu_cb(self, msg):
-    q = msg.orientation
-     self._yaw = math.atan2(2.0 * (q.w * q.z + q.x * q.y),
-                            1.0 - 2.0 * (q.y * q.y + q.z * q.z))
+        q = msg.orientation
+        self._yaw = math.atan2(2.0 * (q.w * q.z + q.x * q.y),
+                               1.0 - 2.0 * (q.y * q.y + q.z * q.z))
 
     def rotate_to_angle(self, angle_deg, max_speed=1.5, tolerance_deg=5.0, timeout=8.0):
         """Closed-loop turn using IMU yaw. Positive = left (CCW)."""
