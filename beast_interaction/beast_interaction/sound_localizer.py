@@ -131,3 +131,33 @@ def localize():
     angle = delay_to_angle(delay)
     print(f'[sound_localizer] delay={delay} samples  angle={angle:.1f}°')
     return angle
+
+def start_stereo_capture(duration=3, device='plughw:CARD=USBAudio,DEV=0'):
+    """Start a background stereo recording. Returns (process, filename)."""
+    filename = f'/tmp/tdoa_{datetime.now().strftime("%Y%m%d_%H%M%S_%f")}.wav'
+    cmd = ['arecord', '-q', '-D', device, '-f', 'S16_LE', '-c', '2',
+           '-r', str(SAMPLE_RATE), '-d', str(int(duration)), filename]
+    proc = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    return proc, filename
+
+
+def localize_file(filename, window_sec=0.5):
+    """Localize using the loudest window of an existing stereo recording."""
+    try:
+        left, right = _read_stereo_wav(filename)
+    except Exception as e:
+        print(f'[sound_localizer] read error: {e}')
+        return None
+
+    # Focus on the loudest stretch (the wake word), not the silence around it
+    win = int(SAMPLE_RATE * window_sec)
+    if len(left) > win:
+        energy = np.cumsum(left**2 + right**2)
+        sums = energy[win:] - energy[:-win]
+        start = int(np.argmax(sums))
+        left, right = left[start:start + win], right[start:start + win]
+
+    delay = compute_tdoa(left, right)
+    angle = delay_to_angle(delay)
+    print(f'[sound_localizer] delay={delay} samples  angle={angle:.1f}°')
+    return angle
