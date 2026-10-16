@@ -266,7 +266,7 @@ class VoiceAssistant(Node):
 from rclpy.executors import ExternalShutdownException   # put with the other imports
 
 def main(args=None):
-    rclpy.init(args=args)
+    rclpy.init(args=args, signal_handler_options=SignalHandlerOptions.NO)
     node = VoiceAssistant()
     try:
         rclpy.spin(node)
@@ -277,7 +277,10 @@ def main(args=None):
         if node._lights_timer is not None:
             node._lights_timer.cancel()
         if hasattr(node, '_cmd_vel_pub'):
-            node._cmd_vel_pub.publish(Twist())   # don't leave it spinning mid-turn
+            try:
+                node._cmd_vel_pub.publish(Twist())   # stop any turn in progress
+            except Exception:
+                pass
         node.destroy_node()
         rclpy.try_shutdown()
         
