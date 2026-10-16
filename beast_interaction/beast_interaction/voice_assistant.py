@@ -14,6 +14,7 @@ from ddgs import DDGS
 import re
 from beast_msgs.srv import SetLEDBrightness
 from beast_interaction import sound_localizer
+from rclpy.signals import SignalHandlerOptions
 from rclpy.executors import ExternalShutdownException
 
 class VoiceAssistant(Node):
