@@ -12,6 +12,7 @@ import math
 from geometry_msgs.msg import Twist
 from ddgs import DDGS
 import re
+from sensor_msgs.msg import Imu
 from beast_msgs.srv import SetLEDBrightness
 from beast_interaction import sound_localizer
 from rclpy.signals import SignalHandlerOptions
@@ -20,6 +21,10 @@ from rclpy.executors import ExternalShutdownException
 class VoiceAssistant(Node):
     def __init__(self):
         super().__init__('voice_assistant')
+
+        self._yaw = None
+        self._cmd_vel_pub = self.create_publisher(Twist, '/cmd_vel', 10)
+        self.create_subscription(Imu, '/imu/data', self._imu_cb, 10)
 
         # LED service clients — one per IO channel
         self.light_client_io4 = self.create_client(SetLEDBrightness, 'ugv/set_headlights')
@@ -247,32 +252,40 @@ class VoiceAssistant(Node):
                         self.speak("I didn't catch that")
                         self.lights_off_delayed(2.0)
 
-    def rotate_to_angle(self, angle_deg):
-        """
-        Publish a cmd_vel rotation to face the given angle.
-        Positive angle = turn left, negative = turn right.
-        """
-        if not hasattr(self, '_cmd_vel_pub'):
-            self._cmd_vel_pub = self.create_publisher(Twist, '/cmd_vel', 10)
+    def _imu_cb(self, msg):
+    q = msg.orientation
+     self._yaw = math.atan2(2.0 * (q.w * q.z + q.x * q.y),
+                            1.0 - 2.0 * (q.y * q.y + q.z * q.z))
 
-        angular_speed = 1.5   # rad/s
-        angle_rad = math.radians(angle_deg)
-        duration = abs(angle_rad) / angular_speed
+    def rotate_to_angle(self, angle_deg, max_speed=1.5, tolerance_deg=5.0, timeout=8.0):
+        """Closed-loop turn using IMU yaw. Positive = left (CCW)."""
+        if self._yaw is None:
+            self.get_logger().warn('No IMU data — skipping turn')
+            return
 
+        target = math.radians(angle_deg)
+        turned = 0.0
+        last = self._yaw
         twist = Twist()
-        twist.angular.z = angular_speed if angle_rad > 0 else -angular_speed
+        t0 = time.time()
 
-        rate = 20   # Hz
-        steps = int(duration * rate)
+        while time.time() - t0 < timeout:
+            yaw = self._yaw
+            turned += math.atan2(math.sin(yaw - last), math.cos(yaw - last))  # handles ±180 wrap
+            last = yaw
 
-        for _ in range(steps):
+            remaining = target - turned
+            if abs(remaining) < math.radians(tolerance_deg):
+                break
+
+            # Slow down as we approach the target to limit overshoot
+            speed = max(0.4, min(max_speed, 1.5 * abs(remaining)))
+            twist.angular.z = math.copysign(speed, remaining)
             self._cmd_vel_pub.publish(twist)
-            time.sleep(1.0 / rate)
+            time.sleep(0.05)
 
         self._cmd_vel_pub.publish(Twist())
-
-
-from rclpy.executors import ExternalShutdownException   # put with the other imports
+        self.get_logger().info(f'Turned {math.degrees(turned):.0f}° of {angle_deg:.0f}° requested')
 
 def main(args=None):
     rclpy.init(args=args, signal_handler_options=SignalHandlerOptions.NO)
