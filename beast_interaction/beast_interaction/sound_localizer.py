@@ -158,6 +158,10 @@ def localize_file(filename, window_sec=0.5):
         left, right = left[start:start + win], right[start:start + win]
 
     delay = compute_tdoa(left, right)
+    if delay == 0:
+        print('[sound_localizer] delay=0 — front/back ambiguous, not turning')
+        return None
+
     angle = delay_to_angle(delay)
     print(f'[sound_localizer] delay={delay} samples  angle={angle:.1f}°')
     return angle
