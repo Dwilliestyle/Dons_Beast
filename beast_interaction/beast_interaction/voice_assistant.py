@@ -257,7 +257,8 @@ class VoiceAssistant(Node):
         self._yaw = math.atan2(2.0 * (q.w * q.z + q.x * q.y),
                                1.0 - 2.0 * (q.y * q.y + q.z * q.z))
 
-    def rotate_to_angle(self, angle_deg, max_speed=1.5, tolerance_deg=5.0, timeout=8.0):
+    def rotate_to_angle(self, angle_deg, max_speed=1.5, tolerance_deg=5.0,
+                        coast_deg=10.0, timeout=8.0):
         """Closed-loop turn using IMU yaw. Positive = left (CCW)."""
         if self._yaw is None:
             self.get_logger().warn('No IMU data — skipping turn')
@@ -275,7 +276,7 @@ class VoiceAssistant(Node):
             last = yaw
 
             remaining = target - turned
-            if abs(remaining) < math.radians(tolerance_deg):
+            if abs(remaining) < math.radians(tolerance_deg + coast_deg):
                 break
 
             # Slow down as we approach the target to limit overshoot
@@ -285,7 +286,12 @@ class VoiceAssistant(Node):
             time.sleep(0.05)
 
         self._cmd_vel_pub.publish(Twist())
-        self.get_logger().info(f'Turned {math.degrees(turned):.0f}° of {angle_deg:.0f}° requested')
+        time.sleep(0.6)                       # let it coast to a stop
+        yaw = self._yaw
+        settled = turned + math.atan2(math.sin(yaw - last), math.cos(yaw - last))
+        self.get_logger().info(
+            f'Stopped at {math.degrees(turned):.0f}°, settled at '
+            f'{math.degrees(settled):.0f}° of {angle_deg:.0f}° requested')
 
 def main(args=None):
     rclpy.init(args=args, signal_handler_options=SignalHandlerOptions.NO)
