@@ -143,6 +143,9 @@ class VoiceAssistant(Node):
         except Exception as e:
             self.get_logger().error(f"Transcription error: {e}")
             return None
+        finally:
+            if os.path.exists(filename):
+                os.remove(filename)
 
     def search_and_answer(self, question):
         try:
