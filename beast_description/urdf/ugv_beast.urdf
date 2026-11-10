@@ -360,7 +360,7 @@
   <joint name="laser_joint" type="fixed">
     <parent link="base_lidar_link"/>
     <child link="laser_frame"/>
-    <origin xyz="0 0 0.0175" rpy="0 0 0"/>  <!-- Adjust height if needed -->
+    <origin xyz="0 0 0.0175" rpy="0 0 1.5708"/>  <!-- Adjust height if needed -->
   </joint>
 
 </robot>
