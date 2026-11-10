@@ -5,14 +5,12 @@ esp32_bridge:
     baud_rate: 115200
     feedback_rate: 1000.0          # Hz - how fast to read sensor data from ESP32
     min_angular_threshold: 0.2     # rad/s - minimum angular velocity when stationary
-    low_voltage_threshold: 10.0    # volts - ESP32 low battery warning
     warning_cooldown: 5.0          # seconds between battery warnings
     cmd_vel_timeout: 0.5           # seconds - stop motors if no cmd_vel received 
     
-    track_radius: 0.02225     # meters (40mm wheels)
+    track_radius: 0.02225          # meters (44.5mm wheels)
     sprocket_diameter: 0.0445
-    wheelbase: 0.100          # meters (distance between front and rear axles)
-
+    
 joy_teleop:
   ros__parameters:
     deadzone: 0.2              # teleop speed-scaling deadzone (NOT joy_node's own 0.05 stick deadzone)
@@ -32,8 +30,8 @@ battery_monitor:
     # Battery Monitor (INA219 sensor)
     i2c_bus: 1                       # I2C bus number
     ina219_address: 0x42             # INA219 I2C address
-    low_voltage_threshold: 10.0      # volts - show low battery warning
-    critical_voltage_threshold: 9.5  # volts - critical battery level
+    low_voltage_threshold: 9.5       # volts - show low battery warning
+    critical_voltage_threshold: 9.0  # volts - critical battery level
     min_voltage: 6.0                 # volts - minimum valid reading
     max_voltage: 13.0                # volts - maximum valid reading
     update_rate: 5.0                 # Hz - how often to check battery
@@ -51,7 +49,7 @@ odom_publisher:
     base_footprint_frame: 'base_footprint'  # robot base footprint frame
     base_frame: 'base_link'    # robot base frame name
     use_imu_heading: false     # use IMU for heading instead of wheel odometry
-    track_separation: 0.143    # meters (70mm track width) - moved from esp32_bridge, this is what odom_publisher.py actually reads
+    track_separation: 0.143    # meters (143mm track width) - moved from esp32_bridge, this is what odom_publisher.py actually reads
 
 # --- Not used yet but coming eventually ---
 
@@ -63,4 +61,4 @@ odom_publisher:
 # lidar_node:
 #   ros__parameters:
 #     lidar_enabled: false       # enable/disable lidar
-#     lidar_frame: 'base_lidar_link'
+#     lidar_frame: 'laser_frame'
