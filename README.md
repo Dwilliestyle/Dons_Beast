@@ -1,4 +1,4 @@
-# Don's UGV Beast
+# Don's ROS 2 UGV Beast
 
 My ROS2 Jazzy-based autonomous robot built on the Waveshare UGV Beast platform with custom modular packages.
 
@@ -178,5 +178,7 @@ Donald Williamson (dwilliestyle@gmail.com)
 - ROS2 community for excellent documentation
 
 ---
+
+Voice interaction test video short on YouTube
 
 [![UGV Beast Voice Command](https://img.youtube.com/vi/BOj7F3Oy-gA/0.jpg)](https://www.youtube.com/shorts/BOj7F3Oy-gA)
